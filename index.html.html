@@ -1,264 +1,121 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#163e50">
-<meta name="description" content="재단법인 맑고푸른곶의 사업과 활동을 탐험하는 인터랙티브 환경 마을">
-<title>맑고푸른곶 월드 | 환경 마을 탐험</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123d35">
+<title>맑고푸른곶 | 자연과 사람을 잇는 지속가능한 내일</title>
 <style>
-:root{--ink:#17394a;--green:#287b65;--cream:#f6f4e9;--line:#d9e5df;--shadow:0 18px 55px #1233442b}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif;color:var(--ink);background:#d9e9dc}
-button{font:inherit;cursor:pointer}
-#game{position:relative;width:100%;height:100%;min-height:520px;background:linear-gradient(#c9e3dc,#e6edcf)}
-canvas{display:block;width:100%;height:100%;outline:0;touch-action:none}
-.hud{position:absolute;z-index:3;left:22px;right:22px;top:18px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}
-.brand,.mission,.sound,.map-btn{pointer-events:auto;box-shadow:0 8px 25px #17394a18}
-.brand{display:flex;align-items:center;gap:11px;background:#fffffff0;border:1px solid #ffffff;border-radius:17px;padding:10px 15px}
-.brand-mark{width:37px;height:37px;border-radius:12px;background:linear-gradient(145deg,#4eaa83,#1d5369);display:grid;place-items:center;color:white;font-size:21px}
-.brand strong{display:block;font-size:15px;letter-spacing:-.5px}.brand small{display:block;color:#71858b;font-size:9px;letter-spacing:1.7px;font-weight:800;margin-top:2px}
-.hud-right{display:flex;gap:8px;align-items:center}
-.pill{border:1px solid #ffffff;background:#fffffff0;color:#24495a;border-radius:999px;padding:11px 15px;font-size:12px;font-weight:800;box-shadow:0 8px 25px #17394a18}
-.pill span{color:#34856b;margin-right:5px}
-.title-card{position:absolute;z-index:2;left:50%;top:105px;transform:translateX(-50%);text-align:center;pointer-events:none;width:min(90%,560px);text-shadow:0 2px 10px #ffffff80}
-.title-card .eyebrow{font-size:10px;letter-spacing:3px;color:#397b68;font-weight:900}
-.title-card h1{font-size:clamp(25px,4vw,43px);letter-spacing:-1.8px;margin:7px 0 5px;color:#17445a}
-.title-card p{margin:0;font-size:13px;color:#42666b;font-weight:600}
-.bottom-hud{position:absolute;z-index:4;left:22px;right:22px;bottom:18px;display:flex;justify-content:space-between;align-items:end;gap:14px;pointer-events:none}
-.guide{pointer-events:auto;background:#fffffff0;border:1px solid white;border-radius:16px;padding:12px 16px;box-shadow:0 8px 25px #17394a18;max-width:440px;display:flex;gap:11px;align-items:center}
-.guide-icon{width:36px;height:36px;border-radius:12px;background:#e4f1e8;display:grid;place-items:center;font-size:20px;flex:none}
-.guide strong{font-size:12px;display:block}.guide p{margin:2px 0 0;font-size:11px;color:#667c7c;line-height:1.45}
-.controls{pointer-events:auto;display:flex;gap:8px;align-items:end}
-.keys{background:#ffffffdf;border:1px solid white;border-radius:14px;padding:9px 12px;text-align:center;color:#557078;font-size:10px;line-height:1.6}
-.keys b{display:block;color:#234c5b;font-size:12px;letter-spacing:2px}
-.dpad{display:none;grid-template-columns:42px 42px 42px;grid-template-rows:42px 42px 42px;gap:3px;pointer-events:auto}
-.dpad button{border:1px solid #ffffff;background:#fffffff0;border-radius:11px;color:#1e4d5c;font-size:17px;box-shadow:0 5px 15px #17394a20}
-.dpad .up{grid-column:2}.dpad .left{grid-column:1;grid-row:2}.dpad .down{grid-column:2;grid-row:2}.dpad .right{grid-column:3;grid-row:2}
-.dpad .up{grid-row:1}
-.interact-hint{position:absolute;z-index:3;left:50%;bottom:105px;transform:translateX(-50%);background:#173f50eF;color:#fff;padding:9px 15px;border-radius:999px;font-size:12px;font-weight:800;box-shadow:0 7px 20px #16394a35;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
-.interact-hint.show{opacity:1}
-.modal-backdrop{position:absolute;z-index:10;inset:0;background:#102d3d80;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px)}
-.modal-backdrop.open{display:flex}
-.modal{width:min(100%,540px);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 25px 80px #102d3d55;animation:pop .22s ease-out}
-@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
-.modal-visual{height:155px;position:relative;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#c9e6d4,#e8edcf);font-size:70px}
-.modal-visual:after{content:"";position:absolute;inset:auto 0 0;height:55px;background:linear-gradient(transparent,#fff)}
-.modal-content{padding:4px 27px 26px}
-.modal-kicker{font-size:10px;letter-spacing:2px;color:#32836b;font-weight:900}
-.modal h2{font-size:27px;letter-spacing:-1px;margin:6px 0 10px;color:#183f52}
-.modal p{font-size:14px;color:#60767b;line-height:1.8;margin:0 0 18px}
-.modal-actions{display:flex;gap:9px;flex-wrap:wrap}
-.action{border:0;border-radius:10px;padding:12px 16px;font-weight:800;font-size:13px;background:#1b5365;color:#fff}
-.action.secondary{background:#edf4f0;color:#285a50}
-.close{position:absolute;right:16px;top:14px;border:0;background:#ffffffd9;border-radius:50%;width:34px;height:34px;font-size:20px;color:#214a58}
-.toast{position:absolute;z-index:5;left:50%;top:20px;transform:translate(-50%,-15px);opacity:0;transition:.25s;background:#173f50;color:#fff;padding:10px 16px;border-radius:999px;font-size:12px;pointer-events:none}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.map-legend{position:absolute;right:22px;bottom:105px;z-index:2;background:#ffffffdf;border:1px solid white;border-radius:13px;padding:10px 12px;font-size:10px;color:#587276;line-height:1.7}
-.map-legend b{color:#285a50}
-@media(max-width:700px){
- .hud{left:12px;right:12px;top:12px}.brand{padding:8px 10px}.brand-mark{width:32px;height:32px}.brand strong{font-size:13px}
- .hud-right .pill:nth-child(2){display:none}.pill{padding:9px 11px;font-size:11px}
- .title-card{top:82px}.title-card p{font-size:11px}
- .bottom-hud{left:12px;right:12px;bottom:12px}.guide{padding:9px 11px;max-width:calc(100% - 120px)}.guide p{font-size:10px}
- .keys{display:none}.dpad{display:grid}.map-legend{display:none}
- .interact-hint{bottom:145px}
-}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+:root{--green:#176b50;--deep:#103d35;--lime:#b9d85a;--ink:#172b2a;--muted:#6b7974;--line:#e3e9e5;--paper:#f7f8f4}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font-family:Arial,"Noto Sans KR",sans-serif;background:#fff}a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer}
+.topline{height:5px;background:linear-gradient(90deg,#174e3e,#a5cb50)}
+header{height:88px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(22px,5vw,82px);position:absolute;top:5px;left:0;right:0;z-index:20;color:white;border-bottom:1px solid #ffffff3d;transition:.25s}
+header.scrolled{position:fixed;top:0;background:#fff;color:var(--deep);height:74px;border-bottom:1px solid var(--line);box-shadow:0 5px 25px #123d3510}
+.logo{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:-.7px;font-size:19px;white-space:nowrap}.logo-mark{width:36px;height:36px;border:1.5px solid currentColor;border-radius:50%;display:grid;place-items:center;font-size:20px}
+nav{display:flex;align-items:center;gap:clamp(18px,3vw,48px);font-size:14px;font-weight:700}
+.nav-tools{display:flex;align-items:center;gap:18px;font-size:12px;font-weight:700}.menu-btn{background:none;border:0;color:inherit;font-size:25px;padding:4px}
+.hero{height:min(790px,100svh);min-height:650px;position:relative;color:#fff;overflow:hidden;background:#1b483d}
+.hero-bg{position:absolute;inset:0;background:linear-gradient(90deg,#092f2aD9 0%,#103e35a8 42%,#123d3530 100%),url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=2200&q=88') center/cover;transform:scale(1.025);animation:heroZoom 14s ease-in-out infinite alternate}
+@keyframes heroZoom{to{transform:scale(1.09)}}
+.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#0c302a9c,transparent 38%)}
+.hero-content{position:relative;z-index:2;padding:clamp(170px,22vh,235px) clamp(24px,10vw,160px) 0;max-width:1150px}
+.kicker{font-size:11px;letter-spacing:3px;font-weight:800;color:#d5e9a2}.hero h1{font-size:clamp(42px,6vw,78px);line-height:1.13;letter-spacing:-3.7px;margin:22px 0 23px;font-weight:800}.hero p{font-size:clamp(14px,1.5vw,18px);line-height:1.8;color:#e1ebe5;margin:0;max-width:580px}
+.hero-actions{display:flex;gap:12px;margin-top:38px;align-items:center}.btn{display:inline-flex;align-items:center;justify-content:center;gap:18px;padding:15px 22px;border:1px solid #ffffff9c;color:white;font-size:13px;font-weight:800;transition:.2s}.btn.primary{background:#b9d85a;border-color:#b9d85a;color:#183b2e}.btn:hover{transform:translateY(-3px)}
+.hero-bottom{position:absolute;z-index:3;left:clamp(24px,5vw,82px);right:clamp(24px,5vw,82px);bottom:35px;display:flex;justify-content:space-between;align-items:end}
+.slide-count{font-size:12px;letter-spacing:2px}.slide-count b{font-size:23px}.slide-nav{display:flex;gap:7px}.slide-nav button{width:43px;height:43px;border:1px solid #ffffff90;background:#ffffff12;color:#fff;font-size:18px}
+.scroll-cue{font-size:10px;letter-spacing:2px;writing-mode:vertical-rl;display:flex;align-items:center;gap:12px}.scroll-cue:after{content:"";height:55px;width:1px;background:#ffffffa0}
+.quicklinks{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;box-shadow:0 12px 35px #0b33241a;position:relative;z-index:4;margin:-1px auto 0;padding:0 clamp(18px,7vw,110px)}
+.quicklinks a{padding:26px 20px;border-right:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:800}.quicklinks a:first-child{border-left:1px solid var(--line)}.quicklinks span{font-size:21px;color:var(--green)}
+section{padding:110px clamp(22px,8vw,125px)}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:42px}.eyebrow{font-size:11px;letter-spacing:2.4px;color:var(--green);font-weight:900}.section-head h2{font-size:clamp(31px,4vw,48px);letter-spacing:-2px;line-height:1.2;margin:13px 0 0}.section-head p{max-width:440px;color:var(--muted);font-size:14px;line-height:1.8;margin:0}
+.business{background:var(--paper)}.business-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.business-card{min-height:340px;position:relative;overflow:hidden;color:white;background:#234b3e}.business-card .photo{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .7s}.business-card:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#092c27e8,transparent 75%)}.business-card:hover .photo{transform:scale(1.07)}.business-card .card-copy{position:absolute;z-index:2;left:27px;right:27px;bottom:25px}.business-card small{font-size:10px;letter-spacing:2px;color:#d2e7a0;font-weight:800}.business-card h3{font-size:25px;margin:9px 0}.business-card p{font-size:12px;line-height:1.7;color:#e2eae5;margin:0;max-width:280px}.circle-arrow{position:absolute;z-index:3;right:24px;top:24px;width:42px;height:42px;border:1px solid #ffffffa0;border-radius:50%;display:grid;place-items:center;font-size:20px}
+.world-section{background:#123d35;color:#fff;padding-bottom:95px}.world-section .section-head p{color:#c0d1c8}.world-shell{border:1px solid #ffffff35;background:#1a4c40;padding:12px;position:relative}.world-shell canvas{display:block;width:100%;height:490px;background:linear-gradient(#b9d9c8,#dce8bd);touch-action:none}.world-ui{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:15px 8px 5px;color:#d4e4da;font-size:12px}.world-ui strong{color:#d3e89b}.world-ui button{background:#b9d85a;border:0;padding:10px 16px;color:#183b2e;font-weight:900}
+.world-tip{position:absolute;left:50%;top:25px;transform:translateX(-50%);background:#0d382fe8;padding:10px 17px;border-radius:2px;color:white;font-size:12px;white-space:nowrap}
+.impact{display:grid;grid-template-columns:1.05fr 1fr;gap:70px;align-items:center}.impact-visual{min-height:430px;background:linear-gradient(0deg,#123e32a8,#123e3220),url('https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1200&q=85') center/cover;position:relative}.impact-visual:after{content:"NATURE · PEOPLE · FUTURE";position:absolute;bottom:28px;left:28px;color:white;letter-spacing:3px;font-size:11px;font-weight:800}.impact-copy h2{font-size:clamp(34px,4vw,52px);letter-spacing:-2px;line-height:1.22;margin:15px 0 20px}.impact-copy p{color:var(--muted);line-height:1.9;font-size:14px}.impact-link{display:inline-flex;margin-top:18px;padding:14px 0;border-bottom:1px solid var(--green);font-weight:800;color:var(--green);font-size:13px;gap:24px}
+.news{background:#f6f8f5}.news-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:65px}.news-feature{background:#fff}.news-photo{height:250px;background:url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1000&q=80') center/cover}.news-feature-copy{padding:25px}.news-feature-copy small,.news-list small{color:var(--green);font-weight:800;font-size:10px;letter-spacing:1.5px}.news-feature-copy h3{font-size:23px;line-height:1.4;margin:12px 0}.news-feature-copy p{font-size:13px;color:var(--muted);line-height:1.7}.news-list article{padding:18px 0;border-bottom:1px solid #dce5df}.news-list h3{font-size:16px;margin:9px 0}.news-list time{font-size:11px;color:#8b9891}
+footer{background:#0c302a;color:#d8e4dd;padding:48px clamp(22px,8vw,125px) 35px}.footer-top{display:flex;justify-content:space-between;gap:30px;padding-bottom:35px;border-bottom:1px solid #ffffff2b}.footer-brand{font-size:20px;font-weight:900}.footer-nav{display:flex;gap:23px;flex-wrap:wrap;font-size:12px}.footer-bottom{display:flex;justify-content:space-between;gap:20px;padding-top:23px;color:#91aaa0;font-size:10px;line-height:1.8}
+.mega{display:none;position:fixed;z-index:30;inset:0;background:#fff;color:var(--deep);padding:35px clamp(24px,7vw,110px)}.mega.open{display:block}.mega-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:24px}.mega-close{border:0;background:none;font-size:30px;color:var(--deep)}.mega-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:35px;padding-top:45px}.mega-grid h3{font-size:18px}.mega-grid a{display:block;color:#667a70;padding:9px 0;font-size:13px}.mega-grid a:hover{color:var(--green)}
+@media(max-width:850px){nav{display:none}.hero{min-height:620px}.hero-content{padding-top:195px}.quicklinks{grid-template-columns:repeat(2,1fr)}.quicklinks a:nth-child(3){border-left:1px solid var(--line)}.business-grid{grid-template-columns:1fr 1fr}.business-card:last-child{grid-column:span 2}.impact{grid-template-columns:1fr;gap:35px}.impact-visual{min-height:320px}.news-grid{grid-template-columns:1fr;gap:25px}.mega-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){header{height:70px;padding:0 18px}.logo{font-size:16px}.hero{height:720px;min-height:650px}.hero-content{padding:190px 24px 0}.hero h1{letter-spacing:-2px}.hero-bottom{bottom:22px}.scroll-cue{display:none}.quicklinks a{padding:20px 12px;font-size:12px}section{padding:75px 20px}.section-head{display:block}.section-head p{margin-top:18px}.business-grid{grid-template-columns:1fr}.business-card,.business-card:last-child{grid-column:auto;min-height:300px}.world-shell{padding:6px}.world-shell canvas{height:360px}.world-ui{align-items:flex-start;flex-direction:column}.impact-visual{min-height:270px}.footer-top,.footer-bottom{display:block}.footer-nav{margin-top:22px}.mega-grid{gap:15px}.mega-grid h3{font-size:15px}.mega-grid a{font-size:11px}}
 </style>
 </head>
 <body>
-<div id="game">
- <canvas id="world" aria-label="방향키 또는 WASD로 캐릭터를 움직이며 마을을 탐험하는 게임 화면"></canvas>
- <div class="hud">
-  <a class="brand" href="#" aria-label="맑고푸른곶 월드 홈">
-   <span class="brand-mark">🌿</span><span><strong>맑고푸른곶 월드</strong><small>CLEAR & BLUE FOUNDATION</small></span>
-  </a>
-  <div class="hud-right">
-   <div class="pill"><span>●</span> 환경 마을 탐험 중</div>
-   <button class="pill map-btn" id="helpBtn">조작 안내 ?</button>
-  </div>
- </div>
- <div class="title-card">
-  <div class="eyebrow">WELCOME TO THE ECO VILLAGE</div>
-  <h1>맑고 푸른 내일을 탐험해요</h1>
-  <p>마을을 걸어 다니며 맑고푸른곶의 이야기를 만나보세요.</p>
- </div>
- <div class="interact-hint" id="interactHint">SPACE 또는 ENTER 를 눌러 살펴보기</div>
- <div class="map-legend"><b>마을 안내</b><br>🏢 재단 본부　🔬 연구센터<br>🏫 교육센터　🌊 환경 보전</div>
- <div class="bottom-hud">
-  <div class="guide"><div class="guide-icon">🧭</div><div><strong id="guideTitle">탐험을 시작해 보세요!</strong><p id="guideText">방향키 또는 WASD로 캐릭터를 움직여 건물 가까이 가보세요.</p></div></div>
-  <div class="controls">
-   <div class="keys"><b>↑ ↓ ← →</b>이동　·　SPACE 상호작용</div>
-   <div class="dpad" aria-label="터치 이동 버튼">
-    <button class="up" data-dir="up" aria-label="위로">▲</button>
-    <button class="left" data-dir="left" aria-label="왼쪽">◀</button>
-    <button class="down" data-dir="down" aria-label="아래로">▼</button>
-    <button class="right" data-dir="right" aria-label="오른쪽">▶</button>
-   </div>
-  </div>
- </div>
- <div class="toast" id="toast"></div>
- <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-  <div class="modal">
-   <div class="modal-visual" id="modalVisual"><span id="modalEmoji">🏢</span><button class="close" id="closeModal" aria-label="닫기">×</button></div>
-   <div class="modal-content">
-    <div class="modal-kicker" id="modalKicker">FOUNDATION</div>
-    <h2 id="modalTitle">재단 본부</h2>
-    <p id="modalText"></p>
-    <div class="modal-actions"><button class="action" id="moreBtn">자세히 알아보기 ↗</button><button class="action secondary" id="backBtn">마을로 돌아가기</button></div>
-   </div>
-  </div>
+<div class="topline"></div>
+<header id="header">
+ <a class="logo" href="#"><span class="logo-mark">✳</span><span>맑고푸른곶</span></a>
+ <nav><a href="#about">재단소개</a><a href="#business">주요사업</a><a href="#world">환경 마을 탐험</a><a href="#sustainability">지속가능경영</a><a href="#news">재단소식</a></nav>
+ <div class="nav-tools"><span>KOR　⌄</span><button class="menu-btn" id="menuBtn" aria-label="전체 메뉴 열기">☰</button></div>
+</header>
+<div class="mega" id="mega">
+ <div class="mega-top"><div class="logo"><span class="logo-mark">✳</span>맑고푸른곶</div><button class="mega-close" id="megaClose" aria-label="닫기">×</button></div>
+ <div class="mega-grid">
+  <div><h3>재단소개</h3><a href="#about">이사장 인사말</a><a href="#about">설립목적 및 비전</a><a href="#about">연혁 및 조직</a></div>
+  <div><h3>주요사업</h3><a href="#business">환경 조사·연구</a><a href="#business">환경 교육·캠페인</a><a href="#business">생태계 보전 활동</a></div>
+  <div><h3>지속가능경영</h3><a href="#sustainability">환경 가치</a><a href="#sustainability">지역사회 협력</a><a href="#sustainability">ESG 활동</a></div>
+  <div><h3>재단소식</h3><a href="#news">공지사항</a><a href="#news">보도자료</a><a href="#news">활동 갤러리</a></div>
  </div>
 </div>
+<main>
+<section class="hero" id="top" style="padding:0">
+ <div class="hero-bg" id="heroBg"></div>
+ <div class="hero-content"><div class="kicker" id="heroKicker">CLEAR NATURE, BETTER TOMORROW</div><h1 id="heroTitle">자연과 사람이 함께<br>푸르게 성장하는 내일</h1><p id="heroDesc">맑고푸른곶은 자연의 가치를 지키고, 더 나은 환경을 다음 세대에 전하기 위해 지속가능한 변화를 만들어갑니다.</p><div class="hero-actions"><a class="btn primary" href="#about">재단 이야기 보기 <span>↗</span></a><a class="btn" href="#world">마을 탐험하기 <span>→</span></a></div></div>
+ <div class="hero-bottom"><div><div class="slide-count"><b id="slideNum">01</b>　/　03</div><div class="slide-nav"><button id="prevSlide" aria-label="이전 배너">←</button><button id="nextSlide" aria-label="다음 배너">→</button></div></div><div class="scroll-cue">SCROLL DOWN</div></div>
+</section>
+<div class="quicklinks"><a href="#about">재단 소개 <span>↗</span></a><a href="#business">주요 사업 <span>↗</span></a><a href="#sustainability">지속가능경영 <span>↗</span></a><a href="#news">공지 및 소식 <span>↗</span></a></div>
+<section class="business" id="business">
+ <div class="section-head"><div><div class="eyebrow">OUR BUSINESS</div><h2>더 나은 환경을 위한<br>우리의 실천</h2></div><p>자연을 이해하고, 사람과 연결하며, 지역사회와 함께 실천합니다. 맑고푸른곶의 주요 사업을 소개합니다.</p></div>
+ <div class="business-grid">
+  <a class="business-card" href="#world"><div class="photo" style="background-image:url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=900&q=85')"></div><span class="circle-arrow">↗</span><div class="card-copy"><small>01 · RESEARCH</small><h3>환경 조사·연구</h3><p>환경의 변화를 관찰하고 더 나은 보전 방향을 연구합니다.</p></div></a>
+  <a class="business-card" href="#world"><div class="photo" style="background-image:url('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=85')"></div><span class="circle-arrow">↗</span><div class="card-copy"><small>02 · EDUCATION</small><h3>환경 교육·참여</h3><p>배움과 참여를 통해 환경의 가치를 함께 나눕니다.</p></div></a>
+  <a class="business-card" href="#world"><div class="photo" style="background-image:url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=85')"></div><span class="circle-arrow">↗</span><div class="card-copy"><small>03 · CONSERVATION</small><h3>생태계 보전</h3><p>소중한 자연과 생태계를 지키는 활동을 이어갑니다.</p></div></a>
+ </div>
+</section>
+<section class="world-section" id="world">
+ <div class="section-head"><div><div class="eyebrow" style="color:#c6df82">EXPLORE OUR WORLD</div><h2>맑고푸른곶의 이야기를<br>직접 탐험해 보세요</h2></div><p>마을을 자유롭게 이동하며 각 공간에 담긴 재단의 사업과 활동을 만나보세요. 방향키 또는 WASD로 캐릭터를 움직일 수 있습니다.</p></div>
+ <div class="world-shell"><div class="world-tip">방향키 / WASD로 이동 · 건물 근처에서 SPACE</div><canvas id="ecoGame" aria-label="환경 마을 게임 화면"></canvas><div class="world-ui"><span id="worldStatus"><strong>탐험 가이드</strong>　캐릭터를 움직여 건물 가까이 가보세요.</span><button id="exploreHelp">조작 방법 보기</button></div></div>
+</section>
+<section class="impact" id="sustainability">
+ <div class="impact-visual"></div><div class="impact-copy"><div class="eyebrow">SUSTAINABILITY</div><h2>오늘의 작은 실천이<br>내일의 큰 변화를 만듭니다</h2><p>지속가능한 환경은 한 사람의 노력만으로 완성되지 않습니다. 지역사회, 전문가, 시민과 함께 자연의 가치를 지키고 더 건강한 미래를 만들어갑니다.</p><a class="impact-link" href="#news">지속가능경영 알아보기 <span>↗</span></a></div>
+</section>
+<section class="news" id="news"><div class="section-head"><div><div class="eyebrow">NEWS & NOTICE</div><h2>맑고푸른곶의<br>새로운 소식</h2></div><p>재단의 공지사항과 다양한 활동 소식을 전해드립니다.</p></div>
+ <div class="news-grid"><article class="news-feature"><div class="news-photo"></div><div class="news-feature-copy"><small>FOUNDATION NEWS</small><h3>자연과 함께하는 지속가능한 내일을 만들어갑니다</h3><p>맑고푸른곶의 다양한 사업과 활동 소식을 확인해 보세요.</p></div></article>
+ <div class="news-list"><article><small>NOTICE</small><h3>재단 홈페이지를 방문해 주셔서 감사합니다.</h3><time>공지사항 · 2026.11.20</time></article><article><small>ACTIVITY</small><h3>지역사회와 함께하는 환경 보전 활동</h3><time>재단소식 · 2026.11.12</time></article><article><small>NEWS</small><h3>환경 교육 및 참여 프로그램 안내</h3><time>사업소식 · 2026.11.05</time></article><a class="impact-link" href="#news">소식 더보기 <span>↗</span></a></div></div>
+</section>
+</main>
+<footer><div class="footer-top"><div class="footer-brand">✳ 맑고푸른곶</div><div class="footer-nav"><a href="#about">재단소개</a><a href="#business">주요사업</a><a href="#sustainability">지속가능경영</a><a href="#news">재단소식</a><a href="#">개인정보처리방침</a></div></div><div class="footer-bottom"><div>재단법인 맑고푸른곶　|　대표전화 및 주소 등 실제 재단 정보 입력 필요<br>본 화면은 홈페이지 UI 리뉴얼 시안이며, 실제 게시판·관리자 시스템 연결 전 단계입니다.</div><div>© CLEAR & BLUE FOUNDATION. ALL RIGHTS RESERVED.</div></div></footer>
 <script>
-(() => {
- const canvas=document.getElementById('world'),ctx=canvas.getContext('2d');
- const hint=document.getElementById('interactHint'),guideTitle=document.getElementById('guideTitle'),guideText=document.getElementById('guideText');
- const backdrop=document.getElementById('modalBackdrop'),toast=document.getElementById('toast');
- const buildings=[
-  {id:'about',name:'재단 본부',emoji:'🏢',x:0,y:-145,color:'#e9d7b5',roof:'#4d7880',kicker:'ABOUT FOUNDATION',desc:'재단의 설립 목적과 운영 방향, 인사말과 조직 등 맑고푸른곶을 소개하는 공간입니다. 자연과 사람, 지역사회가 함께하는 지속가능한 미래를 향한 재단의 이야기를 만나보세요.',detail:'재단소개 메뉴 연결 위치입니다. 실제 홈페이지의 인사말·설립목적·연혁·조직도 페이지 URL로 교체해 주세요.',url:'#foundation'},
-  {id:'research',name:'환경 연구센터',emoji:'🔬',x:190,y:-40,color:'#d9e8dc',roof:'#438b7a',kicker:'RESEARCH & DATA',desc:'환경과 생태에 관한 조사와 연구, 자료 분석을 소개합니다. 정확한 정보와 전문적인 연구를 바탕으로 더 나은 환경을 위한 방향을 모색합니다.',detail:'실제 재단의 연구·조사 사업 및 관련 성과 자료를 연결해 주세요.',url:'#business'},
-  {id:'education',name:'환경 교육센터',emoji:'🏫',x:170,y:150,color:'#f1dfb9',roof:'#c18c52',kicker:'EDUCATION & COMMUNITY',desc:'환경의 소중함을 배우고 함께 실천하는 교육과 지역 협력의 공간입니다. 다양한 참여와 소통을 통해 환경 가치를 널리 나눕니다.',detail:'실제 교육사업·캠페인·지역협력 콘텐츠를 연결해 주세요.',url:'#business'},
-  {id:'coast',name:'환경 보전 기지',emoji:'🌊',x:-190,y:55,color:'#d9e8ed',roof:'#4d91a0',kicker:'NATURE CONSERVATION',desc:'소중한 자연환경과 생태계를 지키기 위한 보전 활동을 소개합니다. 지속가능한 환경을 위한 재단의 활동과 현장을 둘러보세요.',detail:'실제 환경 보전 사업 및 활동 기록 페이지로 연결해 주세요.',url:'#business'}
- ];
- const state={x:0,y:100,dir:'down',moving:false,keys:{},last:0,near:null,modal:null,frame:0};
- let W=0,H=0,dpr=1,scale=1,camX=0,camY=0;
- const iso=(x,y)=>({x:(x-y)*.866*scale,y:(x+y)*.5*scale});
- function resize(){const r=canvas.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);scale=Math.min(W/950,H/650,1.18);if(W<600)scale*=.91}
- addEventListener('resize',resize);resize();
- function roundRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.stroke()}}
- function diamond(x,y,rx,ry,fill,stroke){ctx.beginPath();ctx.moveTo(x,y-ry);ctx.lineTo(x+rx,y);ctx.lineTo(x,y+ry);ctx.lineTo(x-rx,y);ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke()}}
- function worldPoint(x,y){const p=iso(x,y);return{x:W/2+p.x-camX,y:H/2+p.y-camY+20}}
- function drawTree(x,y,s=1){const p=worldPoint(x,y);ctx.save();ctx.translate(p.x,p.y);ctx.scale(s*scale,s*scale);
-  ctx.fillStyle='#00000018';ctx.beginPath();ctx.ellipse(0,7,19,8,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#805c42';ctx.fillRect(-4,-16,8,23);
-  [[0,-35,18,'#367c59'],[-12,-25,14,'#4b9568'],[12,-23,14,'#2e704f'],[0,-48,13,'#5aa477']].forEach(a=>{ctx.beginPath();ctx.arc(a[0],a[1],a[2],0,Math.PI*2);ctx.fillStyle=a[3];ctx.fill()});
-  ctx.restore()}
- function drawBush(x,y){const p=worldPoint(x,y);ctx.save();ctx.translate(p.x,p.y);ctx.scale(scale,scale);ctx.fillStyle='#4f9668';ctx.beginPath();ctx.arc(-6,-4,8,0,7);ctx.arc(5,-6,10,0,7);ctx.arc(12,0,7,0,7);ctx.fill();ctx.restore()}
- function drawBuilding(b){
-  const p=worldPoint(b.x,b.y),s=scale;ctx.save();ctx.translate(p.x,p.y);ctx.scale(s,s);
-  // shadow
-  ctx.fillStyle='#254e3b25';ctx.beginPath();ctx.ellipse(0,8,67,25,0,0,Math.PI*2);ctx.fill();
-  // steps and base
-  diamond(0,0,62,29,'#d6cba9','#b8b18f');
-  // walls
-  ctx.fillStyle=b.color;ctx.beginPath();ctx.moveTo(-43,-24);ctx.lineTo(0,-2);ctx.lineTo(43,-24);ctx.lineTo(43,-74);ctx.lineTo(0,-96);ctx.lineTo(-43,-74);ctx.closePath();ctx.fill();ctx.strokeStyle='#7b8d7d';ctx.stroke();
-  // side shade
-  ctx.fillStyle='#b9cbbd';ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(43,-24);ctx.lineTo(43,-74);ctx.lineTo(0,-51);ctx.closePath();ctx.fill();
-  // roof
-  ctx.fillStyle=b.roof;ctx.beginPath();ctx.moveTo(-52,-73);ctx.lineTo(0,-104);ctx.lineTo(52,-73);ctx.lineTo(0,-43);ctx.closePath();ctx.fill();ctx.strokeStyle='#345d5b';ctx.stroke();
-  ctx.fillStyle='#ffffff55';ctx.beginPath();ctx.moveTo(-52,-73);ctx.lineTo(0,-104);ctx.lineTo(0,-91);ctx.lineTo(-30,-72);ctx.closePath();ctx.fill();
-  // door and windows
-  ctx.fillStyle='#6c6654';ctx.fillRect(-9,-42,18,39);ctx.fillStyle='#b6d7d7';ctx.fillRect(-34,-58,13,17);ctx.fillRect(20,-58,13,17);
-  ctx.fillStyle='#ffffff';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText(b.emoji,0,-70);
-  // label
-  roundRect(-48,-133,96,22,8,'#ffffffed','#dbe6dc');ctx.fillStyle='#234b55';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText(b.name,0,-119);
-  if(state.near===b){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(0,-2,68,32,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([])}
-  ctx.restore()
+const header=document.getElementById('header');addEventListener('scroll',()=>header.classList.toggle('scrolled',scrollY>30));
+const mega=document.getElementById('mega');document.getElementById('menuBtn').onclick=()=>mega.classList.add('open');document.getElementById('megaClose').onclick=()=>mega.classList.remove('open');mega.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>mega.classList.remove('open')));
+const slides=[
+ {k:'CLEAR NATURE, BETTER TOMORROW',t:'자연과 사람이 함께<br>푸르게 성장하는 내일',d:'맑고푸른곶은 자연의 가치를 지키고, 더 나은 환경을 다음 세대에 전하기 위해 지속가능한 변화를 만들어갑니다.',img:'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=2200&q=88'},
+ {k:'PROTECT THE ECOSYSTEM',t:'소중한 생태계,<br>함께 지켜가는 미래',d:'환경을 이해하는 연구와 실천으로 자연과 지역사회가 공존하는 건강한 내일을 만들어갑니다.',img:'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=2200&q=88'},
+ {k:'PEOPLE & NATURE',t:'사람과 자연을 잇는<br>푸른 연결을 시작합니다',d:'배움과 참여, 협력의 힘으로 지속가능한 환경의 가치를 더 널리 나눕니다.',img:'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=2200&q=88'}
+];
+let slide=0;function setSlide(n){slide=(n+slides.length)%slides.length;const s=slides[slide];document.getElementById('heroKicker').textContent=s.k;document.getElementById('heroTitle').innerHTML=s.t;document.getElementById('heroDesc').textContent=s.d;document.getElementById('slideNum').textContent=String(slide+1).padStart(2,'0');document.getElementById('heroBg').style.backgroundImage=`linear-gradient(90deg,#092f2aD9 0%,#103e35a8 42%,#123d3530 100%),url("${s.img}")`;}
+document.getElementById('prevSlide').onclick=()=>setSlide(slide-1);document.getElementById('nextSlide').onclick=()=>setSlide(slide+1);
+document.getElementById('exploreHelp').onclick=()=>alert('방향키 또는 W·A·S·D로 캐릭터를 이동하세요. 건물 가까이 다가가면 SPACE 또는 ENTER로 사업 소개를 확인할 수 있습니다.');
+// Isometric mini-world: original canvas art, independent of external game assets.
+(()=>{
+ const c=document.getElementById('ecoGame'),g=c.getContext('2d'),status=document.getElementById('worldStatus');
+ const keys={},player={x:0,y:110,dir:0,frame:0},places=[
+ {x:0,y:-125,name:'재단 본부',emoji:'🏢',color:'#d9c7a1',roof:'#527b70',desc:'재단의 설립 목적과 비전, 조직과 연혁을 소개하는 공간입니다.'},
+ {x:185,y:-35,name:'환경 연구센터',emoji:'🔬',color:'#d5e5d9',roof:'#438a76',desc:'환경 조사와 연구, 생태 자료를 바탕으로 보전 방향을 모색합니다.'},
+ {x:175,y:145,name:'환경 교육관',emoji:'🏫',color:'#efdfbb',roof:'#b88751',desc:'환경 교육과 시민 참여, 지역사회 협력 활동을 소개합니다.'},
+ {x:-185,y:50,name:'생태 보전 구역',emoji:'🌊',color:'#d7e7e8',roof:'#4c91a0',desc:'자연환경과 생태계를 지키기 위한 보전 활동을 만나보세요.'}
+ ];let w=0,h=0,dpr=1,near=null,cam={x:0,y:0},last=0;
+ function size(){const r=c.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);w=r.width;h=r.height;c.width=w*dpr;c.height=h*dpr;g.setTransform(dpr,0,0,dpr,0,0)}new ResizeObserver(size).observe(c);size();
+ const proj=(x,y)=>({x:(x-y)*.866,y:(x+y)*.5});
+ function pt(x,y){const p=proj(x,y);return{x:w/2+p.x-cam.x,y:h/2+p.y-cam.y+25}}
+ function dia(x,y,rx,ry,color){g.beginPath();g.moveTo(x,y-ry);g.lineTo(x+rx,y);g.lineTo(x,y+ry);g.lineTo(x-rx,y);g.closePath();g.fillStyle=color;g.fill()}
+ function tree(x,y,s=1){const p=pt(x,y);g.save();g.translate(p.x,p.y);g.scale(s,s);g.fillStyle='#0002';g.beginPath();g.ellipse(0,5,13,5,0,0,7);g.fill();g.fillStyle='#805d43';g.fillRect(-3,-13,6,18);[['#377d5b',0,-30,15],['#4e9769',-9,-22,11],['#2f714f',9,-20,11],['#60a678',0,-41,10]].forEach(a=>{g.beginPath();g.arc(a[1],a[2],a[3],0,7);g.fillStyle=a[0];g.fill()});g.restore()}
+ function building(b){const p=pt(b.x,b.y);g.save();g.translate(p.x,p.y);g.fillStyle='#183b3020';g.beginPath();g.ellipse(0,7,57,21,0,0,7);g.fill();dia(0,0,58,27,'#d4c9a8');g.fillStyle=b.color;g.beginPath();g.moveTo(-39,-22);g.lineTo(0,-3);g.lineTo(39,-22);g.lineTo(39,-68);g.lineTo(0,-88);g.lineTo(-39,-68);g.closePath();g.fill();g.fillStyle='#b5c9b8';g.beginPath();g.moveTo(0,-3);g.lineTo(39,-22);g.lineTo(39,-68);g.lineTo(0,-48);g.fill();g.fillStyle=b.roof;g.beginPath();g.moveTo(-47,-68);g.lineTo(0,-98);g.lineTo(47,-68);g.lineTo(0,-40);g.closePath();g.fill();g.fillStyle='#a8d5d3';g.fillRect(-29,-57,11,14);g.fillRect(18,-57,11,14);g.fillStyle='#6c6855';g.fillRect(-8,-39,16,36);g.font='17px sans-serif';g.textAlign='center';g.fillText(b.emoji,0,-68);g.fillStyle='#fff';g.fillRect(-47,-124,94,20);g.fillStyle='#244c45';g.font='bold 10px sans-serif';g.fillText(b.name,0,-110);g.restore()}
+ function draw(t){g.clearRect(0,0,w,h);const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#b9d9cc');bg.addColorStop(1,'#e2e9c5');g.fillStyle=bg;g.fillRect(0,0,w,h);dia(w/2,h/2+20,Math.min(w*.42,450),Math.min(h*.54,270),'#b3d29c');const path=[[-260,200],[-160,120],[-65,90],[0,110],[90,55],[230,-80]];g.beginPath();path.forEach((a,i)=>{const p=pt(...a);i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)});g.strokeStyle='#eee7cb';g.lineWidth=24;g.lineCap='round';g.stroke();dia(...Object.values(pt(0,110)),110,50,'#d6e2b9');
+ [[-320,-210],[-220,-245],[-70,-255],[120,-250],[290,-210],[330,-70],[330,190],[160,255],[-80,260],[-300,210],[-350,40],[80,-190],[-210,20],[250,60]].forEach((a,i)=>tree(a[0],a[1],i%3===0?1.1:.85));
+ [...places].sort((a,b)=>a.y-b.y).forEach(building);
+ const p=pt(player.x,player.y);g.save();g.translate(p.x,p.y+Math.sin(t/150)*1.3);g.fillStyle='#0002';g.beginPath();g.ellipse(0,5,12,5,0,0,7);g.fill();g.fillStyle='#344d55';g.fillRect(-7,-1,6,7);g.fillRect(2,-1,6,7);g.fillStyle='#2f8269';g.beginPath();g.roundRect(-9,-22,18,22,5);g.fill();g.fillStyle='#f1c9a5';g.beginPath();g.arc(0,-30,10,0,7);g.fill();g.fillStyle='#344a49';g.beginPath();g.arc(0,-34,10,Math.PI,Math.PI*2);g.fill();g.fillStyle='#d7a64e';g.fillRect(7,-20,6,12);g.restore();
+ near=places.map(b=>({...b,d:Math.hypot(player.x-b.x,player.y-b.y)})).sort((a,b)=>a.d-b.d)[0];if(near.d<75){status.innerHTML='<strong>'+near.name+'</strong>　건물 가까이 왔어요. SPACE 또는 ENTER로 내용을 확인하세요.'}else status.innerHTML='<strong>탐험 가이드</strong>　캐릭터를 움직여 건물 가까이 가보세요.';
  }
- function drawPath(){
-  // pale winding paths between central plaza and facilities
-  const pts=[[-330,230],[-210,140],[-80,80],[0,100],[90,40],[220,-50],[330,-130]];
-  ctx.beginPath();pts.forEach((v,i)=>{const p=worldPoint(v[0],v[1]);if(!i)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y)});
-  ctx.lineWidth=35*scale;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#d9d2ae';ctx.stroke();
-  ctx.lineWidth=25*scale;ctx.strokeStyle='#eee8ce';ctx.stroke();
-  // plaza
-  const p=worldPoint(0,100);diamond(p.x,p.y,130*scale,65*scale,'#c8d9ad','#adc69d');
-  diamond(p.x,p.y,95*scale,47*scale,'#d9e4bc');
- }
- function drawWater(){
-  // decorative pond at upper left
-  const p=worldPoint(-330,-155);ctx.save();ctx.translate(p.x,p.y);ctx.scale(scale,scale);
-  diamond(0,0,115,44,'#8ec9c5','#69aaa8');diamond(0,-4,92,32,'#a9d9d1');
-  for(let i=-2;i<=2;i++){ctx.strokeStyle='#ffffff80';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(i*22-15,-4+i*3);ctx.lineTo(i*22+15,-4+i*3);ctx.stroke()}
-  ctx.restore()
- }
- function drawCharacter(){
-  const p=worldPoint(state.x,state.y),s=scale;ctx.save();ctx.translate(p.x,p.y);ctx.scale(s,s);
-  const bob=state.moving?Math.sin(state.frame*.025)*2:Math.sin(state.frame*.008)*.8;
-  ctx.translate(0,bob);
-  ctx.fillStyle='#00000022';ctx.beginPath();ctx.ellipse(0,5,13,6,0,0,7);ctx.fill();
-  // feet
-  ctx.fillStyle='#314c55';ctx.fillRect(-8,-1,7,8);ctx.fillRect(2,-1,7,8);
-  // body jacket
-  ctx.fillStyle='#2f8269';ctx.beginPath();ctx.roundRect(-10,-22,20,22,6);ctx.fill();
-  ctx.fillStyle='#e8f1dc';ctx.fillRect(-2,-20,4,15);
-  // head
-  ctx.fillStyle='#f1c9a5';ctx.beginPath();ctx.arc(0,-30,11,0,7);ctx.fill();
-  // hair
-  ctx.fillStyle='#344b4a';ctx.beginPath();ctx.arc(0,-35,11,Math.PI,Math.PI*2);ctx.lineTo(10,-30);ctx.lineTo(-10,-30);ctx.fill();
-  // backpack
-  ctx.fillStyle='#d5a34f';ctx.fillRect(8,-20,6,13);
-  // direction marker
-  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(state.dir==='left'?-4:state.dir==='right'?4:0,-30,1.2,0,7);ctx.fill();
-  ctx.restore()
- }
- function drawWorld(){
-  ctx.clearRect(0,0,W,H);
-  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#c7e3d8');bg.addColorStop(1,'#e8edcf');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-  // soft clouds
-  for(let i=0;i<5;i++){const x=((i*237+state.frame*.08)%(W+180))-80,y=70+(i%3)*42;ctx.fillStyle='#ffffff48';ctx.beginPath();ctx.ellipse(x,y,35,10,0,0,7);ctx.ellipse(x+20,y-5,22,12,0,0,7);ctx.fill()}
-  // ground diamond
-  diamond(W/2,H/2+20,Math.min(W*.72,620*scale),Math.min(H*.58,350*scale),'#b5d59d','#a5c68f');
-  drawWater();drawPath();
-  // scattered grass dots
-  for(let i=0;i<85;i++){const x=((i*137)%780)-390,y=((i*83)%560)-280,p=worldPoint(x,y);ctx.fillStyle=i%2?'#6eaa7755':'#f4f1c766';ctx.beginPath();ctx.arc(p.x,p.y,1.5*scale,0,7);ctx.fill()}
-  // tree placement
-  const trees=[[-360,-250],[-250,-270],[-100,-275],[100,-280],[280,-245],[370,-170],[350,30],[340,250],[180,275],[-40,280],[-280,260],[-390,100],[-360,-20],[-210,30],[90,-205],[-80,-185],[280,95],[-260,180]];
-  trees.forEach((t,i)=>drawTree(t[0],t[1],i%3===0?1.15:.9));
-  // small bushes
-  [[-120,190],[110,230],[260,10],[-300,-100],[80,-260],[-190,-220]].forEach(v=>drawBush(v[0],v[1]));
-  // sort by y for depth
-  [...buildings].sort((a,b)=>a.y-b.y).forEach(drawBuilding);
-  drawCharacter();
-  // ambient label
-  ctx.fillStyle='#3d725f';ctx.font=`bold ${10*scale}px sans-serif`;ctx.textAlign='center';
-  const sign=worldPoint(-15,215);ctx.fillText('환경 마을 광장',sign.x,sign.y);
- }
- function nearestBuilding(){let best=null,dist=Infinity;for(const b of buildings){const d=Math.hypot(state.x-b.x,state.y-b.y);if(d<78&&d<dist){best=b;dist=d}}return best}
- function openBuilding(b){
-  if(!b)return;
-  state.modal=b;document.getElementById('modalEmoji').textContent=b.emoji;document.getElementById('modalKicker').textContent=b.kicker;
-  document.getElementById('modalTitle').textContent=b.name;document.getElementById('modalText').textContent=b.desc;
-  document.getElementById('moreBtn').onclick=()=>{closeModal();if(b.url && b.url!=='#')showToast('실제 재단 페이지 URL을 연결해 주세요.')};
-  backdrop.classList.add('open');
- }
- function closeModal(){backdrop.classList.remove('open');state.modal=null}
- document.getElementById('closeModal').onclick=closeModal;document.getElementById('backBtn').onclick=closeModal;
- backdrop.addEventListener('click',e=>{if(e.target===backdrop)closeModal()});
- document.getElementById('helpBtn').onclick=()=>{showToast('방향키 또는 WASD로 이동 · SPACE/ENTER로 건물 살펴보기')};
- function showToast(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(showToast.t);showToast.t=setTimeout(()=>toast.classList.remove('show'),2600)}
- const keyMap={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};
- addEventListener('keydown',e=>{
-  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
-  if(state.modal){if(e.key==='Escape')closeModal();return}
-  if(keyMap[e.key])state.keys[keyMap[e.key]]=true;
-  if(e.key===' '||e.key==='Enter'){if(state.near)openBuilding(state.near)}
- });
- addEventListener('keyup',e=>{if(keyMap[e.key])state.keys[keyMap[e.key]]=false});
- addEventListener('blur',()=>{state.keys={}});
- document.querySelectorAll('.dpad button').forEach(btn=>{
-  const dir=btn.dataset.dir;
-  btn.addEventListener('pointerdown',e=>{e.preventDefault();state.keys[dir]=true;btn.setPointerCapture(e.pointerId)});
-  ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>btn.addEventListener(ev,()=>state.keys[dir]=false));
- });
- function update(dt){
-  if(!state.modal){
-   let dx=0,dy=0;
-   if(state.keys.left)dx-=1;if(state.keys.right)dx+=1;if(state.keys.up)dy-=1;if(state.keys.down)dy+=1;
-   state.moving=!!(dx||dy);
-   if(state.moving){const len=Math.hypot(dx,dy);dx/=len;dy/=len;const speed=145*dt;state.x+=dx*speed;state.y+=dy*speed;state.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')}
-   state.x=Math.max(-390,Math.min(390,state.x));state.y=Math.max(-300,Math.min(300,state.y));
-  }else state.moving=false;
-  state.near=nearestBuilding();
-  if(state.near){hint.classList.add('show');guideTitle.textContent=state.near.name+'에 도착했어요';guideText.textContent='SPACE 또는 ENTER를 눌러 이 공간의 사업 이야기를 확인하세요.'}
-  else{hint.classList.remove('show');guideTitle.textContent='탐험을 시작해 보세요!';guideText.textContent='방향키 또는 WASD로 캐릭터를 움직여 건물 가까이 가보세요.'}
-  // Camera follows character with smooth easing
-  const p=iso(state.x,state.y);camX+=(p.x-camX)*Math.min(1,dt*4);camY+=(p.y-camY)*Math.min(1,dt*4);
- }
- function loop(t){const dt=Math.min((t-state.last)/1000||0,.04);state.last=t;state.frame=t;update(dt);drawWorld();requestAnimationFrame(loop)}
- requestAnimationFrame(loop);
+ function tick(t){const dt=Math.min((t-last)/1000||0,.04);last=t;let dx=0,dy=0;if(keys.ArrowLeft||keys.a)dx--;if(keys.ArrowRight||keys.d)dx++;if(keys.ArrowUp||keys.w)dy--;if(keys.ArrowDown||keys.s)dy++;if(dx||dy){const l=Math.hypot(dx,dy);player.x+=dx/l*125*dt;player.y+=dy/l*125*dt;player.dir=Math.atan2(dy,dx)}player.x=Math.max(-360,Math.min(360,player.x));player.y=Math.max(-260,Math.min(260,player.y));const pp=proj(player.x,player.y);cam.x+=(pp.x-cam.x)*Math.min(1,dt*4);cam.y+=(pp.y-cam.y)*Math.min(1,dt*4);draw(t);requestAnimationFrame(tick)}requestAnimationFrame(tick);
+ addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key))e.preventDefault();keys[e.key]=true;if(e.key===' '||e.key==='Enter'){if(near&&near.d<75)alert(near.name+'\n\n'+near.desc+'\n\n※ 실제 재단 콘텐츠와 페이지 주소로 교체할 수 있는 시안 문구입니다.')}});addEventListener('keyup',e=>keys[e.key]=false);addEventListener('blur',()=>Object.keys(keys).forEach(k=>keys[k]=false));
 })();
 </script>
-</body>
-</html>
+</body></html>
