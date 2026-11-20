@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>지렁이 서바이벌</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #08111b; color: #eef6ff;
+    font-family: system-ui, -apple-system, "맑은 고딕", sans-serif;
+    overflow: hidden; touch-action: none;
+  }
+  #game-wrap { position: relative; width: 100vw; height: 100dvh; overflow: hidden; }
+  canvas { display:block; width:100%; height:100%; background:#0b1723; }
+  .hud {
+    position:absolute; top:12px; left:12px; right:12px; z-index:2;
+    display:flex; justify-content:space-between; gap:8px; pointer-events:none;
+  }
+  .stat {
+    background:rgba(4,12,20,.76); border:1px solid rgba(255,255,255,.13);
+    border-radius:12px; padding:8px 12px; min-width:92px;
+    box-shadow:0 4px 18px #0005; backdrop-filter:blur(6px);
+  }
+  .stat small { display:block; color:#9eb2c7; font-size:11px; }
+  .stat strong { font-size:18px; font-variant-numeric:tabular-nums; }
+  #tip {
+    position:absolute; top:82px; left:50%; transform:translateX(-50%);
+    color:#d8e7f5; background:#07111dcc; border:1px solid #ffffff22;
+    border-radius:999px; padding:7px 13px; font-size:12px; white-space:nowrap;
+    pointer-events:none;
+  }
+  #controls {
+    position:absolute; bottom:18px; left:18px; z-index:3;
+    display:grid; grid-template-columns:54px 54px 54px; grid-template-rows:54px 54px;
+    gap:5px; user-select:none; -webkit-user-select:none;
+  }
+  .dir {
+    border:1px solid #ffffff35; border-radius:14px;
+    background:rgba(8,22,34,.78); color:white; font-size:25px;
+    box-shadow:0 4px 12px #0007; touch-action:none;
+  }
+  .dir:active { background:#1e9e68; transform:scale(.96); }
+  #up { grid-column:2; grid-row:1; } #left { grid-column:1; grid-row:2; }
+  #down { grid-column:2; grid-row:2; } #right { grid-column:3; grid-row:2; }
+  #overlay {
+    position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center;
+    background:rgba(2,8,14,.72); padding:20px;
+  }
+  #panel {
+    width:min(430px, 94vw); padding:26px 24px; border-radius:22px;
+    background:linear-gradient(145deg,#142b3d,#0b1724);
+    border:1px solid #ffffff25; text-align:center; box-shadow:0 18px 60px #0009;
+  }
+  #panel h1 { margin:0 0 8px; font-size:30px; color:#74f5a7; }
+  #panel p { color:#c0d0df; line-height:1.6; font-size:14px; }
+  #start {
+    border:0; border-radius:13px; padding:13px 28px; margin-top:8px;
+    color:#062014; background:#6df2a1; font-weight:800; font-size:17px;
+    cursor:pointer;
+  }
+  #start:active { transform:scale(.98); }
+  #mini-help { color:#91a8bd; font-size:12px; margin-top:14px; }
+  @media (min-width:800px) {
+    #controls { bottom:24px; left:24px; transform:scale(1.08); transform-origin:bottom left; }
+    #tip { top:88px; }
+  }
+</style>
+</head>
+<body>
+<div id="game-wrap">
+  <canvas id="game"></canvas>
+  <div class="hud">
+    <div class="stat"><small>점수</small><strong id="score">0</strong></div>
+    <div class="stat"><small>길이</small><strong id="length">8</strong></div>
+    <div class="stat"><small>생존 시간</small><strong id="time">0초</strong></div>
+  </div>
+  <div id="tip">먹이를 먹고 성장하세요 · 상대 몸통에 닿으면 게임 종료!</div>
+  <div id="controls" aria-label="방향 조작">
+    <button class="dir" id="up" aria-label="위">▲</button>
+    <button class="dir" id="left" aria-label="왼쪽">◀</button>
+    <button class="dir" id="down" aria-label="아래">▼</button>
+    <button class="dir" id="right" aria-label="오른쪽">▶</button>
+  </div>
+  <div id="overlay">
+    <div id="panel">
+      <h1 id="panel-title">🐛 지렁이 서바이벌</h1>
+      <p id="panel-text">먹이를 먹으며 길이를 늘리고 오래 살아남으세요.<br><b>상대 지렁이의 몸통에 닿는 순간 내 지렁이가 죽습니다.</b></p>
+      <button id="start">게임 시작</button>
+      <div id="mini-help">키보드 방향키 / WASD 또는 화면 방향키로 이동</div>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const lengthEl = document.getElementById('length');
+  const timeEl = document.getElementById('time');
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('start');
+  const panelTitle = document.getElementById('panel-title');
+  const panelText = document.getElementById('panel-text');
+
+  let W=0,H=0,dpr=1, running=false, last=0, accumulator=0;
+  const WORLD_W=2600, WORLD_H=1900, CELL=18;
+  const STEP=105; // ms per movement step
+  let player, bots=[], foods=[], score=0, elapsed=0, startedAt=0, camera={x:0,y:0};
+  let desired={x:1,y:0}, gameOver=false, botId=0;
+
+  function resize(){
+    dpr=Math.min(window.devicePixelRatio||1,2);
+    W=canvas.clientWidth; H=canvas.clientHeight;
+    canvas.width=Math.floor(W*dpr); canvas.height=Math.floor(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize',resize); resize();
+
+  const rand=(a,b)=>Math.random()*(b-a)+a;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const same=(a,b)=>a.x===b.x&&a.y===b.y;
+  const key=(p)=>p.x+','+p.y;
+  function randomCell(){
+    return {x:Math.floor(rand(3,WORLD_W/CELL-3)), y:Math.floor(rand(3,WORLD_H/CELL-3))};
+  }
+  function newSnake(x,y,color,isPlayer=false){
+    const dir=isPlayer?{x:1,y:0}:{x:Math.random()<.5?1:-1,y:0};
+    const body=[];
+    for(let i=0;i<8;i++) body.push({x:x-dir.x*i,y:y-dir.y*i});
+    return {body,dir,color,isPlayer,alive:true,id:++botId,think:0,target:null};
+  }
+  function occupied(p){
+    if(player && player.body.some(q=>same(p,q))) return true;
+    return bots.some(b=>b.alive&&b.body.some(q=>same(p,q)));
+  }
+  function spawnFood(){
+    let p,tries=0;
+    do { p=randomCell(); tries++; } while(occupied(p)&&tries<200);
+    foods.push({...p,phase:rand(0,6.28)});
+  }
+  function reset(){
+    score=0; elapsed=0; botId=0; foods=[]; bots=[];
+    player=newSnake(Math.floor(WORLD_W/CELL/2),Math.floor(WORLD_H/CELL/2),'#62f59a',true);
+    desired={x:1,y:0};
+    for(let i=0;i<9;i++){
+      const p=randomCell();
+      bots.push(newSnake(p.x,p.y,['#ffbd69','#ff718a','#70c7ff','#c59aff','#ffd96b'][i%5]));
+    }
+    for(let i=0;i<75;i++) spawnFood();
+    camera.x=player.body[0].x*CELL-W/2;
+    camera.y=player.body[0].y*CELL-H/2;
+    scoreEl.textContent='0'; lengthEl.textContent=player.body.length; timeEl.textContent='0초';
+    gameOver=false;
+  }
+  function setDirection(dx,dy){
+    if(!player||!player.alive) return;
+    // 180도 즉시 반전 금지
+    if(dx===-player.dir.x && dy===-player.dir.y) return;
+    desired={x:dx,y:dy};
+  }
+  document.addEventListener('keydown',e=>{
+    const k=e.key.toLowerCase();
+    const map={arrowup:[0,-1],w:[0,-1],arrowdown:[0,1],s:[0,1],arrowleft:[-1,0],a:[-1,0],arrowright:[1,0],d:[1,0]};
+    if(map[k]){e.preventDefault();setDirection(...map[k]);}
+  });
+  [['up',0,-1],['down',0,1],['left',-1,0],['right',1,0]].forEach(([id,x,y])=>{
+    const el=document.getElementById(id);
+    const go=e=>{e.preventDefault();setDirection(x,y);};
+    el.addEventListener('pointerdown',go);
+    el.addEventListener('click',go);
+  });
+
+  function respawnBot(bot){
+    const p=randomCell();
+    const replacement=newSnake(p.x,p.y,bot.color);
+    Object.assign(bot,replacement);
+  }
+  function botDirection(bot){
+    const head=bot.body[0];
+    // 먹이와 플레이어를 피하면서 먹이 쪽으로 움직이는 간단한 AI
+    let target=foods.reduce((best,f)=>{
+      const d=Math.abs(f.x-head.x)+Math.abs(f.y-head.y);
+      return !best||d<best.d?{f,d}:best;
+    },null);
+    let choices=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}]
+      .filter(d=>!(d.x===-bot.dir.x&&d.y===-bot.dir.y));
+    choices.sort((a,b)=>{
+      const pa={x:head.x+a.x,y:head.y+a.y}, pb={x:head.x+b.x,y:head.y+b.y};
+      const da=target?Math.abs(pa.x-target.f.x)+Math.abs(pa.y-target.f.y):rand(0,10);
+      const db=target?Math.abs(pb.x-target.f.x)+Math.abs(pb.y-target.f.y):rand(0,10);
+      const danger=p=> {
+        let n=0;
+        if(p.x<1||p.y<1||p.x>=WORLD_W/CELL-1||p.y>=WORLD_H/CELL-1)n+=1000;
+        if(bot.body.slice(0,-1).some(q=>same(q,p)))n+=1000;
+        if(player.body.some(q=>same(q,p)))n+=200;
+        bots.forEach(other=>{if(other!==bot&&other.alive&&other.body.some(q=>same(q,p)))n+=80;});
+        return n;
+      };
+      return (da+danger(pa)+rand(0,2))-(db+danger(pb)+rand(0,2));
+    });
+    return choices[0]||bot.dir;
+  }
+  function moveSnake(s,dir){
+    s.dir=dir;
+    const h=s.body[0], next={x:h.x+dir.x,y:h.y+dir.y};
+    s.body.unshift(next);
+    let ate=-1;
+    for(let i=0;i<foods.length;i++){
+      if(same(next,foods[i])){ate=i;break;}
+    }
+    if(ate>=0){
+      foods.splice(ate,1); score += s.isPlayer?10:0;
+      if(s.isPlayer){for(let i=0;i<3;i++)spawnFood();}
+    } else s.body.pop();
+    return next;
+  }
+  function step(){
+    if(!running)return;
+    if(desired.x!==-player.dir.x||desired.y!==-player.dir.y) player.dir={...desired};
+    const next=moveSnake(player,player.dir);
+    // 맵 경계 충돌
+    if(next.x<0||next.y<0||next.x>=WORLD_W/CELL||next.y>=WORLD_H/CELL){endGame('맵 경계에 부딪혔습니다.');return;}
+    // 자기 몸통 충돌 (머리 바로 뒤는 제외)
+    if(player.body.slice(1).some(p=>same(p,next))){endGame('자기 몸통에 부딪혔습니다.');return;}
+    // 상대 지렁이의 몸통에 닿으면 플레이어만 사망. 서로 잡아먹는 규칙은 없음.
+    for(const b of bots){
+      if(b.alive && b.body.slice(1).some(p=>same(next,p))){
+        endGame('상대 지렁이의 몸통에 닿았습니다!');return;
+      }
+    }
+    // AI 이동: AI는 플레이어를 처치하거나 먹지 않으며, 플레이어의 사망 판정에만 상대 몸통이 적용됨.
+    bots.forEach(bot=>{
+      if(!bot.alive)return;
+      const d=botDirection(bot);
+      const bh=bot.body[0], bn={x:bh.x+d.x,y:bh.y+d.y};
+      if(bn.x<0||bn.y<0||bn.x>=WORLD_W/CELL||bn.y>=WORLD_H/CELL ||
+         bot.body.slice(1).some(p=>same(p,bn))){
+        respawnBot(bot); return;
+      }
+      // AI끼리 겹치지 않도록 회피
+      const collides=bots.some(other=>other!==bot&&other.alive&&other.body.some(p=>same(p,bn)));
+      if(collides){respawnBot(bot);return;}
+      moveSnake(bot,d);
+    });
+    while(foods.length<75)spawnFood();
+    scoreEl.textContent=score;
+    lengthEl.textContent=player.body.length;
+    elapsed=(performance.now()-startedAt)/1000;
+    timeEl.textContent=Math.floor(elapsed)+'초';
+  }
+  function endGame(reason){
+    running=false; gameOver=true;
+    panelTitle.textContent='게임 종료';
+    panelText.innerHTML=`${reason}<br><br>최종 점수: <b>${score}</b> · 생존 시간: <b>${Math.floor(elapsed)}초</b>`;
+    startBtn.textContent='다시 시작';
+    overlay.style.display='flex';
+  }
+  function drawGrid(){
+    ctx.fillStyle='#0b1723';ctx.fillRect(0,0,W,H);
+    const startX=Math.floor(camera.x/CELL)*CELL;
+    const startY=Math.floor(camera.y/CELL)*CELL;
+    ctx.strokeStyle='rgba(130,170,200,.075)';ctx.lineWidth=1;
+    for(let x=startX;x<camera.x+W+CELL;x+=CELL){ctx.beginPath();ctx.moveTo(x-camera.x,0);ctx.lineTo(x-camera.x,H);ctx.stroke();}
+    for(let y=startY;y<camera.y+H+CELL;y+=CELL){ctx.beginPath();ctx.moveTo(0,y-camera.y);ctx.lineTo(W,y-camera.y);ctx.stroke();}
+    ctx.strokeStyle='#52718a';ctx.lineWidth=5;
+    ctx.strokeRect(-camera.x,-camera.y,WORLD_W,WORLD_H);
+  }
+  function drawFood(f,t){
+    const x=f.x*CELL+CELL/2-camera.x,y=f.y*CELL+CELL/2-camera.y;
+    const pulse=1+Math.sin(t/180+f.phase)*.15;
+    ctx.beginPath();ctx.arc(x,y,5*pulse,0,Math.PI*2);
+    ctx.fillStyle='#ffd85c';ctx.shadowColor='#ffca3a';ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;
+    ctx.beginPath();ctx.arc(x-1.5,y-1.5,1.5,0,Math.PI*2);ctx.fillStyle='#fff4b0';ctx.fill();
+  }
+  function drawSnake(s){
+    for(let i=s.body.length-1;i>=0;i--){
+      const p=s.body[i],x=p.x*CELL+CELL/2-camera.x,y=p.y*CELL+CELL/2-camera.y;
+      const r=i===0?8.5:7.3;
+      ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fillStyle=s.color;ctx.shadowColor=s.color;ctx.shadowBlur=i===0?13:4;ctx.fill();ctx.shadowBlur=0;
+      if(i===0){
+        const px=-s.dir.y*3.1,py=s.dir.x*3.1;
+        for(const side of [-1,1]){
+          ctx.beginPath();ctx.arc(x+s.dir.x*3+px*side,y+s.dir.y*3+py*side,2.1,0,Math.PI*2);
+          ctx.fillStyle='#092018';ctx.fill();
+        }
+      }
+    }
+  }
+  function render(t){
+    if(!player)return;
+    const head=player.body[0];
+    const targetX=head.x*CELL+CELL/2-W/2,targetY=head.y*CELL+CELL/2-H/2;
+    camera.x+=(targetX-camera.x)*.13;camera.y+=(targetY-camera.y)*.13;
+    camera.x=clamp(camera.x,0,Math.max(0,WORLD_W-W));
+    camera.y=clamp(camera.y,0,Math.max(0,WORLD_H-H));
+    drawGrid();
+    foods.forEach(f=>drawFood(f,t));
+    bots.forEach(b=>{if(b.alive)drawSnake(b);});
+    drawSnake(player);
+    // 지도 가장자리 경고 영역
+    requestAnimationFrame(render);
+  }
+  function loop(now){
+    if(!running){last=now;requestAnimationFrame(loop);return;}
+    if(!last)last=now;
+    accumulator+=Math.min(now-last,80);last=now;
+    while(accumulator>=STEP){step();accumulator-=STEP;if(!running)break;}
+    requestAnimationFrame(loop);
+  }
+  startBtn.addEventListener('click',()=>{
+    reset();startedAt=performance.now();last=0;accumulator=0;
+    panelTitle.textContent='🐛 지렁이 서바이벌';
+    overlay.style.display='none';running=true;
+  });
+  reset();
+  requestAnimationFrame(render);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
